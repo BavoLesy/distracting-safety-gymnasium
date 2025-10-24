@@ -1,4 +1,5 @@
 # Copyright 2022-2023 OmniSafe Team. All Rights Reserved.
+# Copyright 2025 IDLab, University of Antwerp - imec. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+#
+# This setup file has been modified by IDLab, University of Antwerp - imec
+# to package the distracting Safety Gymnasium suite with visual distraction capabilities.
+# Original work by OmniSafe Team.
 """Set up."""
 
 import pathlib
@@ -46,7 +51,7 @@ try:
             VERSION_CONTENT = None
 
     setup(
-        name='safety-gymnasium',
+        name='distracting-safety-gymnasium',
         version=version.__version__,
     )
 finally:

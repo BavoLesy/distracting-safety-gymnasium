@@ -1,7 +1,7 @@
 print-%  : ; @echo $* = $($*)
-PROJECT_NAME   = safety-gymnasium
-COPYRIGHT      = "OmniSafe Team. All Rights Reserved."
-PROJECT_PATH   = safety_gymnasium
+PROJECT_NAME   = distracting-safety-gymnasium
+COPYRIGHT      = "IDLab, University of Antwerp - imec. All Rights Reserved."
+PROJECT_PATH   = distracting-safety_gymnasium
 SHELL          = /bin/bash
 SOURCE_FOLDERS = $(PROJECT_PATH) examples tests docs
 PYTHON_FILES   = $(shell find $(SOURCE_FOLDERS) -type f -name "*.py" -o -name "*.pyi")

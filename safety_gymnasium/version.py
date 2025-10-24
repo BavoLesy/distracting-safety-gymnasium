@@ -1,4 +1,5 @@
 # Copyright 2022-2023 OmniSafe Team. All Rights Reserved.
+# Copyright 2025 IDLab, University of Antwerp - imec. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Safety-Gymnasium."""
+#
+# This version file has been updated by IDLab, University of Antwerp - imec
+# for the distracting Safety Gymnasium suite with visual distraction capabilities.
+# Original work by OmniSafe Team.
+"""Distracting Safety-Gymnasium."""
 
 __version__ = '1.2.0'
 __license__ = 'Apache License, Version 2.0'
