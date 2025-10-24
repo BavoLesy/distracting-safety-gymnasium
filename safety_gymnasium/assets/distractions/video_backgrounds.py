@@ -105,7 +105,7 @@ def create_skybox_cubemap(image, face_size):
     """
     # Ensure image is RGB
     if len(image.shape) == 3 and image.shape[2] == 4:
-        image = image[:, :, :3] 
+        image = image[:, :, :3]  # Remove alpha channel
     elif len(image.shape) == 2:
         image = np.stack([image] * 3, axis=-1)  # Convert grayscale to RGB
     
@@ -197,7 +197,8 @@ class SafetyGymVideoBackground:
             # Use all videos if no specific ones were passed
             if not dataset_videos:
                 if TF_AVAILABLE:
-                    dataset_videos = sorted(tf.io.gfile.listdir(dataset_path))
+                    dataset_videos = sorted([fn.decode('utf-8') if isinstance(fn, bytes) else fn 
+                                           for fn in tf.io.gfile.listdir(dataset_path)])
                 else:
                     dataset_videos = sorted(os.listdir(dataset_path))
             # Replace video placeholders with actual video lists
@@ -236,31 +237,25 @@ class SafetyGymVideoBackground:
             model: MuJoCo model object
             data: MuJoCo data object
         """
-        try:
-            # Find skybox texture
-            self.sky_texture_id = self.find_skybox_texture_id(model)
+        # Find skybox texture
+        self.sky_texture_id = self.find_skybox_texture_id(model)
             
-            # Store original skybox data for blending
-            if self._original_skybox_data is None:
-                sky_height = model.tex_height[self.sky_texture_id]
-                sky_width = model.tex_width[self.sky_texture_id]
-                sky_address = model.tex_adr[self.sky_texture_id]
+        # Store original skybox data for blending
+        if self._original_skybox_data is None:
+            sky_height = model.tex_height[self.sky_texture_id]
+            sky_width = model.tex_width[self.sky_texture_id]
+            sky_address = model.tex_adr[self.sky_texture_id]
                 
-                # MuJoCo stores texture data in tex_rgb (RGB format, 3 channels)
-                sky_nchannel = 3
-                sky_size = sky_height * sky_width * sky_nchannel
-                # Get texture data from tex_rgb array
-                self._original_skybox_data = model.tex_rgb[
-                    sky_address : sky_address + sky_size
-                ].copy().astype(np.float32)
+            # MuJoCo stores texture data in tex_rgb (RGB format, 3 channels)
+            sky_nchannel = 3
+            sky_size = sky_height * sky_width * sky_nchannel
+            # Get texture data from tex_rgb array
+            self._original_skybox_data = model.tex_rgb[
+                sky_address : sky_address + sky_size
+            ].copy().astype(np.float32)
             
-            self._reset_background(model, data)
+        self._reset_background(model, data)
             
-        except Exception as e:
-            print(f"[VideoBackground] Failed to initialize: {e}")
-            self._video_paths = []
-        
-
     def reset_episode(self, model, data):
         """Reset background for new episode."""
         # Clean up old textures first
@@ -295,8 +290,9 @@ class SafetyGymVideoBackground:
                     else:
                         video_files = os.listdir(path)
                     file_names.extend([
-                        os.path.join(path, fn) for fn in video_files
-                        if fn.lower().endswith(('.png', '.jpg', '.jpeg'))
+                        os.path.join(path, fn.decode('utf-8') if isinstance(fn, bytes) else fn) 
+                        for fn in video_files
+                        if (fn.decode('utf-8') if isinstance(fn, bytes) else fn).lower().endswith(('.png', '.jpg', '.jpeg'))
                     ])
                 self._random_state.shuffle(file_names)
                 file_names = file_names[:self._shuffle_buffer_size]
@@ -310,8 +306,8 @@ class SafetyGymVideoBackground:
                     file_names = os.listdir(video_path)
                 
                 # Filter for image files
-                file_names = [fn for fn in file_names 
-                            if fn.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                file_names = [fn.decode('utf-8') if isinstance(fn, bytes) else fn for fn in file_names 
+                            if (fn.decode('utf-8') if isinstance(fn, bytes) else fn).lower().endswith(('.png', '.jpg', '.jpeg'))]
                 # Sort filenames numerically for consistent frame order
                 file_names.sort(key=lambda x: int(x.split('.')[0]))
                 if not self._dynamic:
