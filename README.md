@@ -220,10 +220,10 @@ If you use this distraction suite in your research, please cite:
 
 ```bibtex
 @misc{distracting_safetygym,
-  title={...},
-  author={Your Name},
+  title={Distracting Safety Gymnasium},
+  author={Bavo Lesy},
   year={2025},
-  url={https://github.com/your-repo/distracting-safety-gym}
+  url={https://github.com/BavoLesy/distracting-safety-gymnasium}
 }
 ```
 
