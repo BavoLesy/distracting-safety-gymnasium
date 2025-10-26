@@ -170,7 +170,7 @@ env = safety_gymnasium.make(
     }
 )
 
-# Standard RL training loop
+# Standard RL loop
 obs, info = env.reset()
 for step in range(1000):
     action = policy(obs)  # Your policy here
