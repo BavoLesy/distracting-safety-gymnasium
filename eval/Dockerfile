@@ -74,5 +74,3 @@ RUN pip install --upgrade pip && \
         echo "All requirements installed successfully."; \
     fi; \
     true
-
-RUN chmod +x install.sh
