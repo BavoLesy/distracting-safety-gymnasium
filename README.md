@@ -26,22 +26,14 @@ A comprehensive visual distraction suite for Safety Gymnasium environments, desi
 <div align="center">
   
   <!-- Showcase GIFs: place your GIFs in images/ with these filenames or update paths -->
-  <img src="images/dynamic_distractions_1.gif" alt="Dynamic color distractions" height="280" />
-  <img src="images/dynamic_distractions_2.gif" alt="Dynamic color distractions" height="280" />
-  <img src="images/static_full_distractions.gif" alt="Static color distractions" height="280" />
-  <br/>
-  <img src="images/video_background_2.gif" alt="Dynamic video distractions" height="280" />
-  <img src="images/video_background.gif" alt="Dynamic video distractions" height="280" />
-  <img src="images/static_background.gif" alt="Static video distractions" height="280" />
+  <img src="images/dynamic_distractions_1.gif" alt="Dynamic color distractions" height="250" />
+  <img src="images/dynamic_distractions_2.gif" alt="Dynamic color distractions" height="250" />
+  <img src="images/video_background_2.gif" alt="Dynamic video distractions" height="250" />
   
-  <br/>
-  <em>Examples of Distracting Safety Gymnasium environments with video backgrounds and color distractions.</em>
   
-  <!-- Optional second row; uncomment/add more as needed -->
-  <!--
-  <br/>
-  <img src="images/push.gif" alt="Push task with distractions" height="180" />
-  <img src="images/goal.gif" alt="Goal task with distractions" height="180" />
+  <!--img src="images/video_background.gif" alt="Dynamic video distractions" height="250" />
+  <img src="images/static_full_distractions.gif" alt="Static color distractions" height="250" />
+  <img src="images/static_background.gif" alt="Static video distractions" height="250" />
   -->
 </div>
 
