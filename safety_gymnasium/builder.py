@@ -140,14 +140,7 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         self.task_id: str = task_id
         self.config: dict = config
         self._seed: int = None
-        self._setup_simulation()
-
-        self.first_reset: bool = None
-        self.steps: int = None
-        self.cost: float = None
-        self.terminated: bool = True
-        self.truncated: bool = False
-
+        # Initialize render parameters early so they are available in _get_task()
         self.render_parameters = RenderConf(render_mode, width, height, camera_id, camera_name)
         
         # Color randomization parameters - Distractions
@@ -170,6 +163,16 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         self._object_filters = self._get_object_filters()   
         self._object_patterns = self._get_object_patterns()
 
+        self._setup_simulation()
+
+        self.first_reset: bool = None
+        self.steps: int = None
+        self.cost: float = None
+        self.terminated: bool = True
+        self.truncated: bool = False
+
+        # (moved earlier)
+
     def _setup_simulation(self) -> None:
         """Set up mujoco the simulation instance."""
         self.task = self._get_task()
@@ -191,7 +194,26 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         
         task = task_class(config=task_config)
 
+        # If a camera is explicitly requested at make(), force vision observations
+        camera_name = self.render_parameters.camera_name
+        if camera_name is not None:
+            # Ensure we expose vision observations and keep dict unflattened while we adjust
+            task.observe_vision = True
+            task.observation_flatten = False
+
         task.build_observation_space()
+
+        # Align observation_space to pure vision frames when a camera is specified (no frame stacking)
+        if camera_name is not None:
+            rows, cols = task.vision_env_conf.vision_size
+            # Two RGB views concatenated along channels when using front/back camera
+            channels = 6 if camera_name == 'vision_front_back' else 3
+            task.observation_space = gymnasium.spaces.Box(
+                low=0,
+                high=255,
+                shape=(rows, cols, channels),
+                dtype=np.uint8,
+            )
         
         # Video background will be initialized on first reset when model is available
         
@@ -253,6 +275,8 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         self.first_reset = False  # Built our first world successfully
 
         # Return an observation
+        if self.render_parameters.camera_name is not None:
+            return (self._camera_obs(), info)
         return (self.task.obs(), info)
 
     def step(self, action: np.ndarray) -> tuple[np.ndarray, float, float, bool, bool, dict]:
@@ -318,7 +342,32 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
 
         if self.render_parameters.mode == 'human':
             self.render()
-        return self.task.obs(), reward, cost, self.terminated, self.truncated, info
+        if self.render_parameters.camera_name is not None:
+            obs_out = self._camera_obs()
+        else:
+            obs_out = self.task.obs()
+        return obs_out, reward, cost, self.terminated, self.truncated, info
+
+    def _camera_obs(self) -> np.ndarray:
+        """Produce a vision observation based on requested camera_name.
+
+        - If camera_name == 'vision_front_back': concatenate front and back views along channels.
+        - Otherwise, render the specified camera.
+        Output shape matches (rows, cols, channels) where rows, cols from vision_env_conf.
+        """
+        rows, cols = self.task.vision_env_conf.vision_size
+        width, height = cols, rows
+        cam = self.render_parameters.camera_name
+        if cam == 'vision_front_back':
+            front = self.task.render(width=width, height=height, mode='rgb_array', camera_name='vision', cost={})
+            back = self.task.render(width=width, height=height, mode='rgb_array', camera_name='vision_back', cost={})
+            # Ensure uint8 and correct shape
+            front = front.astype(np.uint8)
+            back = back.astype(np.uint8)
+            return np.concatenate([front, back], axis=-1)
+        else:
+            frame = self.task.render(width=width, height=height, mode='rgb_array', camera_name=cam, cost={})
+            return frame.astype(np.uint8)
 
     def _reward(self) -> float:
         """Calculate the current rewards.

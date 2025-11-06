@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "gymnasium == 0.28.1",
+    "gymnasium == 0.29.1",
     "gymnasium-robotics == 1.2.2",
     "pygame == 2.1.0",
     "mujoco == 2.3.3",
@@ -87,7 +87,7 @@ lines_after_imports = 2
 multi_line_output = 3
 
 [tool.mypy]
-python_version = 3.8
+python_version = 3.9
 pretty = true
 show_error_codes = true
 show_error_context = true
