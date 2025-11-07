@@ -200,6 +200,11 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
             # Ensure we expose vision observations and keep dict unflattened while we adjust
             task.observe_vision = True
             task.observation_flatten = False
+            # Align task vision size with requested render size if provided
+            target_width = self.render_parameters.width
+            target_height = self.render_parameters.height
+            if target_width is not None and target_height is not None:
+                task.vision_env_conf.vision_size = (int(target_width), int(target_height))
 
         task.build_observation_space()
 
