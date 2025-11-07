@@ -206,6 +206,10 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         # Align observation_space to pure vision frames when a camera is specified (no frame stacking)
         if camera_name is not None:
             rows, cols = task.vision_env_conf.vision_size
+            # Ensure render dimensions align with requested observation size
+            if rows is not None and cols is not None:
+                self.render_parameters.height = rows
+                self.render_parameters.width = cols
             # Two RGB views concatenated along channels when using front/back camera
             channels = 6 if camera_name == 'vision_front_back' else 3
             task.observation_space = gymnasium.spaces.Box(
@@ -356,7 +360,8 @@ class Builder(gymnasium.Env, gymnasium.utils.EzPickle):
         Output shape matches (rows, cols, channels) where rows, cols from vision_env_conf.
         """
         rows, cols = self.task.vision_env_conf.vision_size
-        width, height = cols, rows
+        width = self.render_parameters.width or cols
+        height = self.render_parameters.height or rows
         cam = self.render_parameters.camera_name
         if cam == 'vision_front_back':
             front = self.task.render(width=width, height=height, mode='rgb_array', camera_name='vision', cost={})
