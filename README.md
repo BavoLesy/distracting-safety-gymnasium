@@ -158,7 +158,8 @@ max_distraction_config:
 - `'walls'`: Wall and barrier objects
 - `'vases'`: Vase objects specifically
 - `'goals'`: Goal objects
-- `'agents'`: Agent bodies
+- `'agent'`: Agent bodies
+- `'floor'`: Floor objects
 - Custom list: `['hazards', 'walls', 'goals']`
 
 ## Usage Examples
@@ -180,7 +181,8 @@ env = safety_gymnasium.make(
         'num_videos': 10,
         'change_geoms_color': 'dynamic',
         'beta_rgb': 0.5,
-        'object_filter': ['hazards', 'walls']
+        'object_filter': ['hazards', 'walls'],
+        'vision_env_conf.vision_size': (64, 64)
     }
 )
 
@@ -193,38 +195,12 @@ for step in range(1000):
         obs, info = env.reset()
 ```
 
-### Evaluation Configurations
-
-```yaml
-# Easy distraction level
-easy_distraction:
-  env.safetygym.video_alpha: 0.3
-  env.safetygym.video_dynamic: False
-  env.safetygym.beta_rgb: 0.2
-  env.safetygym.change_geoms_color: 'static'
-
-# Medium distraction level  
-medium_distraction:
-  env.safetygym.video_alpha: 0.6
-  env.safetygym.video_dynamic: True
-  env.safetygym.beta_rgb: 0.4
-  env.safetygym.change_geoms_color: 'dynamic'
-
-# Hard distraction level
-hard_distraction:
-  env.safetygym.video_alpha: 0.9
-  env.safetygym.video_dynamic: True
-  env.safetygym.beta_rgb: 0.8
-  env.safetygym.change_geoms_color: 'dynamic'
-  env.safetygym.object_filter: 'all'
-```
-
-
 ### Supported Environments
 - All Safety Gymnasium navigation environments:
   - `SafetyPointGoal1-v0`, `SafetyPointGoal2-v0`
   - `SafetyCarGoal1-v0`, `SafetyCarGoal2-v0`
   - `SafetyPointButton1-v0`, `SafetyPointButton2-v0`
+  - ...
 
 
 
