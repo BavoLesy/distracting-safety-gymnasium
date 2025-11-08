@@ -33,8 +33,8 @@ class SAIRAgent:
             mu, _, _, _ = self.actor(obs, compute_pi=False, compute_log_pi=False)
             return mu.cpu().data.numpy().flatten()
     
-    def load(self, model_dir, distractions):
-        model_path = os.path.join(model_dir, f'model_{distractions}.pt')
+    def load(self, model_dir, domain_name,distractions):
+        model_path = os.path.join(model_dir, f'{distractions}.pt')
         if os.path.exists(model_path):
             self.actor.load_state_dict(torch.load(model_path, map_location=self.device))
             print(f"Loaded actor from {model_path}")
