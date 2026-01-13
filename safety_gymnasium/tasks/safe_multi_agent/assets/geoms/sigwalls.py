@@ -34,8 +34,8 @@ class Sigwalls(Geom):  # pylint: disable=too-many-instance-attributes
     placements: list = None
     keepout: float = 0.0
 
-    color: np.array = COLOR['sigwall']
-    group: np.array = GROUP['sigwall']
+    color: np.array = field(default_factory=lambda: COLOR['sigwall'].copy())
+    group: int = GROUP['sigwall']
     is_lidar_observed: bool = False
     is_constrained: bool = False
 

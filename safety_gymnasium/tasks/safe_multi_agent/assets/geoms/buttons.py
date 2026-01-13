@@ -45,8 +45,8 @@ class Buttons(Geom):  # pylint: disable=too-many-instance-attributes
     # if reward_distance is 0, then the reward function is sparse
     reward_distance: float = 1.0  # Dense reward multiplied by the distance moved to the goal
 
-    color: np.array = COLOR['button']
-    group: np.array = GROUP['button']
+    color: np.array = field(default_factory=lambda: COLOR['button'].copy())
+    group: int = GROUP['button']
     is_lidar_observed: bool = True
     is_constrained: bool = True
 
