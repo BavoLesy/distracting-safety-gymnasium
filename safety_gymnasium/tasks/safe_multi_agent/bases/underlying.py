@@ -219,6 +219,14 @@ class Underlying(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.observe_vision = False  # Observe vision from the agent
         self.debug = False
         self.observation_flatten = True  # Flatten observation into a vector
+        # Physics overrides (None = use XML default)
+        self.agent_density = None
+        self.agent_damping = None
+        self.agent_friction = None
+        self.agent_motor_force_scale = None
+        self.agent_motor_gear_scale = None
+        self.agent_size_scale = None
+        self.gravity = None
         self._parse(config)
         self.agent = None
         self.action_noise: float = (

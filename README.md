@@ -162,9 +162,76 @@ max_distraction_config:
 - `'floor'`: Floor objects
 - Custom list: `['hazards', 'walls', 'goals']`
 
+## Physics Randomization
+
+For robust reinforcement learning, the environment supports runtime modification of physics parameters. These affect the agent's dynamics without changing visual appearance.
+
+### Physics Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `agent_density` | `float` | XML default | Agent body density (affects mass and inertia) |
+| `agent_damping` | `float` | XML default | Joint damping (energy dissipation) |
+| `agent_friction` | `float/list` | XML default | Geom friction [sliding, torsional, rolling] or single value |
+| `agent_motor_force_scale` | `float` | `1.0` | Scale factor for motor force limits |
+| `agent_motor_gear_scale` | `float` | `1.0` | Scale factor for motor gear ratios |
+| `agent_size_scale` | `float` | `1.0` | Uniform scale factor for agent geometry sizes |
+| `gravity` | `float/list` | `-9.81` | Gravity as z-value or [x, y, z] vector |
+
+### Fixed Physics
+
+Set physics once at environment creation:
+
+```python
+import safety_gymnasium
+
+# Physics fixed for entire training run
+env = safety_gymnasium.make(
+    'SafetyCarGoal1-v0',
+    config={
+        'agent_density': 6.0,
+        'agent_friction': 1.5,
+        'agent_motor_force_scale': 0.8,
+    }
+)
+
+obs, info = env.reset()
+# ... train for many episodes, physics stay the same on every reset
+```
+
+### Per-Episode Randomization
+
+Create a new environment each episode for different physics:
+
+```python
+import safety_gymnasium
+import numpy as np
+
+def make_randomized_env():
+    return safety_gymnasium.make(
+        'SafetyCarGoal1-v0',
+        config={
+            'agent_density': np.random.uniform(3.0, 7.0),
+            'agent_friction': np.random.uniform(0.5, 2.0),
+            'agent_motor_force_scale': np.random.uniform(0.7, 1.3),
+            'gravity': np.random.uniform(-11.0, -8.0),
+        }
+    )
+
+env = make_randomized_env()
+obs, info = env.reset()
+for step in range(100000):
+    action = policy(obs)
+    obs, reward, cost, terminated, truncated, info = env.step(action)
+    if terminated or truncated:
+        env.close()
+        env = make_randomized_env()  # New random physics
+        obs, info = env.reset()
+```
+
 ## Usage Examples
 
-### Training with Distractions
+### Training with Visual Distractions
 
 ```python
 import safety_gymnasium
@@ -186,14 +253,6 @@ env = safety_gymnasium.make(
     }
 )
 
-# Standard RL loop
-obs, info = env.reset()
-for step in range(1000):
-    action = policy(obs)  # Your policy here
-    obs, reward, cost, terminated, truncated, info = env.step(action)
-    if terminated or truncated:
-        obs, info = env.reset()
-```
 
 ### Supported Environments
 - All Safety Gymnasium navigation environments:
@@ -222,6 +281,7 @@ If you use this distraction suite in your research, please cite:
 - [Distracting Control Suite](https://github.com/google-research/google-research/tree/master/distracting_control)
 - [Safety Gymnasium](https://github.com/PKU-Alignment/safety-gymnasium)
 - [DAVIS Challenge](https://davischallenge.org/)
+- [Robust Gymnasium](https://github.com/SafeRL-Lab/Robust-Gymnasium)
 
 ## License
 

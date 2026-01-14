@@ -354,6 +354,13 @@ class BaseTask(Underlying):  # pylint: disable=too-many-instance-attributes,too-
             world_config['agent_rot'] = self.random_generator.generate_rots(2)
         else:
             world_config['agent_rot'] = float(self.agent.rot)
+        # Pass physics overrides to world
+        physics_params = ['agent_density', 'agent_damping', 'agent_friction',
+                          'agent_motor_force_scale', 'agent_motor_gear_scale',
+                          'agent_size_scale', 'gravity']
+        for param in physics_params:
+            if hasattr(self, param) and getattr(self, param) is not None:
+                world_config[param] = getattr(self, param)
 
         # process world config via different objects.
         world_config.update(

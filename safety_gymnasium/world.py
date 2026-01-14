@@ -61,6 +61,14 @@ class World:  # pylint: disable=too-many-instance-attributes
         'agent_base': 'assets/xmls/car.xml',  # Which agent XML to use as the base
         'agent_xy': np.zeros(2),  # agent XY location
         'agent_rot': 0,  # agent rotation about Z axis
+        # Physics overrides (None = use XML default)
+        'agent_density': None,  # Geom density (affects mass)
+        'agent_damping': None,  # Joint damping (energy dissipation)
+        'agent_friction': None,  # Geom friction [sliding, torsional, rolling] or single value
+        'agent_motor_force_scale': None,  # Scale motor forcerange (e.g., 0.5 = half force)
+        'agent_motor_gear_scale': None,  # Scale motor gear ratio
+        'agent_size_scale': None,  # Scale all agent geom sizes uniformly
+        'gravity': None,  # Override gravity [x, y, z] or single z value
         'floor_size': [3.5, 3.5, 0.1],  # Used for displaying the floor
         # FreeGeoms -- this is processed and added by the Builder class
         'free_geoms': {},  # map from name -> object dict
@@ -114,6 +122,9 @@ class World:  # pylint: disable=too-many-instance-attributes
         if self.task_name in ['FormulaOne']:  # pylint: disable=no-member
             self.xml['mujoco']['option']['@integrator'] = 'RK4'
             self.xml['mujoco']['option']['@timestep'] = '0.004'
+
+        # Apply physics overrides
+        self._apply_physics_overrides()
 
         if 'compiler' not in self.xml['mujoco']:
             compiler = xmltodict.parse(
@@ -413,6 +424,114 @@ class World:  # pylint: disable=too-many-instance-attributes
         # Recompute simulation intrinsics from new position
         mujoco.mj_forward(model, data)  # pylint: disable=no-member
         self.engine.update(model, data)
+
+    def _apply_physics_overrides(self):
+        """Apply physics parameter overrides to the XML before building the model."""
+        xml = self.xml['mujoco']
+        worldbody = xml['worldbody']
+
+        def recurse_bodies(body, geom_fn=None, joint_fn=None):
+            """Recursively apply functions to geoms/joints in body tree."""
+            if isinstance(body, dict):
+                if geom_fn and 'geom' in body:
+                    geoms = body['geom'] if isinstance(body['geom'], list) else [body['geom']]
+                    for g in geoms:
+                        if isinstance(g, dict):
+                            geom_fn(g)
+                if joint_fn and 'joint' in body:
+                    joints = body['joint'] if isinstance(body['joint'], list) else [body['joint']]
+                    for j in joints:
+                        if isinstance(j, dict):
+                            joint_fn(j)
+                if 'body' in body:
+                    bodies = body['body'] if isinstance(body['body'], list) else [body['body']]
+                    for b in bodies:
+                        recurse_bodies(b, geom_fn, joint_fn)
+            elif isinstance(body, list):
+                for item in body:
+                    recurse_bodies(item, geom_fn, joint_fn)
+
+        # Helper to set default and recurse agent body
+        def apply_override(default_section, default_attr, value_str, body_fn=None):
+            if 'default' in xml and default_section in xml['default']:
+                d = xml['default'][default_section]
+                if isinstance(d, dict):
+                    d[default_attr] = value_str
+                elif isinstance(d, list):
+                    for item in d:
+                        item[default_attr] = value_str
+            if body_fn and 'body' in worldbody:
+                recurse_bodies(worldbody['body'], **body_fn)
+
+        # Density override
+        if getattr(self, 'agent_density', None) is not None:
+            apply_override('geom', '@density', str(self.agent_density),
+                           {'geom_fn': lambda g: g.update({'@density': str(self.agent_density)})})
+
+        # Damping override
+        if getattr(self, 'agent_damping', None) is not None:
+            apply_override('joint', '@damping', str(self.agent_damping),
+                           {'joint_fn': lambda j: j.update({'@damping': str(self.agent_damping)})})
+
+        # Friction override (can be single value or [sliding, torsional, rolling])
+        if getattr(self, 'agent_friction', None) is not None:
+            friction = self.agent_friction
+            if isinstance(friction, (int, float)):
+                friction_str = f"{friction} 0.01 0.01"
+            else:
+                friction_str = ' '.join(str(f) for f in friction)
+            apply_override('geom', '@friction', friction_str,
+                           {'geom_fn': lambda g: g.update({'@friction': friction_str})})
+
+        # Motor force scale (scale forcerange)
+        if getattr(self, 'agent_motor_force_scale', None) is not None:
+            scale = self.agent_motor_force_scale
+            if 'actuator' in xml:
+                actuators = xml['actuator']
+                for act_type in ['motor', 'velocity', 'position']:
+                    if act_type in actuators:
+                        acts = actuators[act_type] if isinstance(actuators[act_type], list) else [actuators[act_type]]
+                        for act in acts:
+                            if '@forcerange' in act:
+                                lo, hi = map(float, act['@forcerange'].split())
+                                act['@forcerange'] = f"{lo * scale} {hi * scale}"
+
+        # Motor gear scale
+        if getattr(self, 'agent_motor_gear_scale', None) is not None:
+            scale = self.agent_motor_gear_scale
+            if 'actuator' in xml:
+                actuators = xml['actuator']
+                for act_type in ['motor', 'velocity', 'position']:
+                    if act_type in actuators:
+                        acts = actuators[act_type] if isinstance(actuators[act_type], list) else [actuators[act_type]]
+                        for act in acts:
+                            if '@gear' in act:
+                                gear_vals = [float(v) * scale for v in act['@gear'].split()]
+                                act['@gear'] = ' '.join(str(v) for v in gear_vals)
+
+        # Size scale (uniform scaling of geom sizes)
+        if getattr(self, 'agent_size_scale', None) is not None:
+            scale = self.agent_size_scale
+            def scale_geom_size(g):
+                if '@size' in g:
+                    sizes = [float(s) * scale for s in g['@size'].split()]
+                    g['@size'] = ' '.join(str(s) for s in sizes)
+                if '@fromto' in g:  # for cylinders/capsules
+                    vals = [float(v) * scale for v in g['@fromto'].split()]
+                    g['@fromto'] = ' '.join(str(v) for v in vals)
+            if 'body' in worldbody:
+                recurse_bodies(worldbody['body'], geom_fn=scale_geom_size)
+
+        # Gravity override
+        if getattr(self, 'gravity', None) is not None:
+            gravity = self.gravity
+            if isinstance(gravity, (int, float)):
+                gravity_str = f"0 0 {gravity}"
+            else:
+                gravity_str = ' '.join(str(g) for g in gravity)
+            if 'option' not in xml:
+                xml['option'] = {}
+            xml['option']['@gravity'] = gravity_str
 
     def rebuild(self, config=None, state=True):
         """Build a new sim from a model if the model changed."""

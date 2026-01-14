@@ -226,6 +226,14 @@ class Underlying(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.action_noise: float = (
             0.0  # Magnitude of independent per-component gaussian action noise
         )
+        # Physics overrides (None = use XML default)
+        self.agent_density = None
+        self.agent_damping = None
+        self.agent_friction = None
+        self.agent_motor_force_scale = None
+        self.agent_motor_gear_scale = None
+        self.agent_size_scale = None
+        self.gravity = None
         self.agent_name = config['agent_name']
         self._build_agent(self.agent_name)
         self._parse(config)
