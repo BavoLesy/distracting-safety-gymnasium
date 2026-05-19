@@ -15,7 +15,7 @@
 # ==============================================================================
 #
 # This file has been modified by IDLab, University of Antwerp - imec to add video background
-# distractions and color distraction functionality for Safety Gymnasium environments.
+# distractions, color distraction, and pixel noise functionality for Safety Gymnasium environments.
 # Original work by OmniSafe Team.
 """Env builder."""
 

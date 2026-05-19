@@ -226,6 +226,7 @@ class Underlying(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.action_noise: float = (
             0.0  # Magnitude of independent per-component gaussian action noise
         )
+        self.pixel_noise_alpha: float = 0.0  # Bounded-uniform pixel noise strength in [0, 1]
         self.agent_name = config['agent_name']
         self._build_agent(self.agent_name)
         self._parse(config)

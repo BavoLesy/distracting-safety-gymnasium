@@ -39,7 +39,7 @@ A comprehensive visual distraction suite for Safety Gymnasium environments, desi
 
 ## Overview
 
-Distracting Safety Gymnasium extends [Safety Gymnasium](https://github.com/PKU-Alignment/safety-gymnasium) with rich static or dynamic visual distractions including video backgrounds and color variations of all objects in the environment.
+Distracting Safety Gymnasium extends [Safety Gymnasium](https://github.com/PKU-Alignment/safety-gymnasium) with rich static or dynamic visual distractions including video backgrounds, color variations of all objects in the environment, and bounded-uniform pixel noise.
 
 
 Our work is heavily inspired by the [Distracting Control Suite](https://github.com/google-research/google-research/blob/master/distracting_control/README.md) but specifically designed for safe navigation environments.
@@ -49,6 +49,8 @@ Our work is heavily inspired by the [Distracting Control Suite](https://github.c
 ### Video Backgrounds: Replace static skybox with real-world video sequences, currently supports the DAVIS-2017 video dataset but other videos can also be used by changing the dataset path. Currently, the dynamic mode lowers the simulation FPS by around a factor of 4, significantely increasing training time. Future improvements are planned to speed up the dynamic mode.
 
 ### Color Distractions: Modify colors of environment objects at episode start or at each step. Objects can be filtered by type or by name.
+
+### Pixel Noise: Add bounded-uniform i.i.d. noise to every pixel of the rendered observation. Each channel is perturbed by U(-alpha*255, alpha*255) and clipped to [0, 255]. Using a bounded distribution (not Gaussian) guarantees the non-collision condition holds deterministically for any `pixel_noise_alpha` below the minimum inter-state pixel distance.
 
 
 ## Installation
@@ -113,6 +115,14 @@ dynamic_color_config:
   env.safetygym.object_filter: ['hazards', 'vases', 'walls']
 ```
 
+### Pixel Noise
+
+```yaml
+# Bounded-uniform pixel noise
+pixel_noise_config:
+  env.safetygym.pixel_noise_alpha: 0.1   # U(-25.5, 25.5) per channel
+```
+
 ### Combined Distractions
 
 ```yaml
@@ -129,6 +139,9 @@ max_distraction_config:
   env.safetygym.change_geoms_color: 'dynamic'
   env.safetygym.beta_rgb: 0.7
   env.safetygym.object_filter: 'all'
+
+  # Pixel noise
+  env.safetygym.pixel_noise_alpha: 0.1
 ```
 
 ## Parameters Reference
@@ -151,6 +164,12 @@ max_distraction_config:
 | `beta_rgb` | `float` | `0.0` | Color variation intensity [0,1] |
 | `object_filter` | `str/list` | `'all'` | Objects to modify ('all' or list of object types) |
 
+### Pixel Noise Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `pixel_noise_alpha` | `float` | `0.0` | Noise amplitude in [0,1]; each pixel channel perturbed by U(-alpha*255, alpha*255) |
+
 ### Available Object Filters
 
 - `'all'`: All environment objects
@@ -169,7 +188,7 @@ max_distraction_config:
 ```python
 import safety_gymnasium
 
-# Create environment with video backgrounds
+# Create environment with video backgrounds and color distractions
 env = safety_gymnasium.make(
     'SafetyPointGoal1-v0',
     render_mode='rgb_array',
@@ -182,6 +201,17 @@ env = safety_gymnasium.make(
         'change_geoms_color': 'dynamic',
         'beta_rgb': 0.5,
         'object_filter': ['hazards', 'walls'],
+        'vision_env_conf.vision_size': (64, 64)
+    }
+)
+
+# Create environment with pixel noise only
+env = safety_gymnasium.make(
+    'SafetyPointGoal1-v0',
+    render_mode='rgb_array',
+    config={
+        'pixel_noise_alpha': 0.1,   # U(-25.5, 25.5) per channel, bounded
+        'observe_vision': True,
         'vision_env_conf.vision_size': (64, 64)
     }
 )

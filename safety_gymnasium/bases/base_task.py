@@ -562,7 +562,15 @@ class BaseTask(Underlying):  # pylint: disable=too-many-instance-attributes,too-
         """
         rows, cols = self.vision_env_conf.vision_size
         width, height = cols, rows
-        return self.render(width, height, mode='rgb_array', camera_name='vision', cost={})
+        frame = self.render(width, height, mode='rgb_array', camera_name='vision', cost={})
+        if self.pixel_noise_alpha > 0.0:
+            noise = np.random.uniform(
+                -self.pixel_noise_alpha * 255,
+                self.pixel_noise_alpha * 255,
+                size=frame.shape,
+            )
+            frame = np.clip(frame.astype(np.int32) + noise, 0, 255).astype(np.uint8)
+        return frame
 
     def _ego_xy(self, pos: np.ndarray) -> np.ndarray:
         """Return the egocentric XY vector to a position from the agent."""
