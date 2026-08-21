@@ -564,7 +564,7 @@ class BaseTask(Underlying):  # pylint: disable=too-many-instance-attributes,too-
         width, height = cols, rows
         frame = self.render(width, height, mode='rgb_array', camera_name='vision', cost={})
         if self.pixel_noise_alpha > 0.0:
-            noise = np.random.uniform(
+            noise = self.random_generator.uniform(
                 -self.pixel_noise_alpha * 255,
                 self.pixel_noise_alpha * 255,
                 size=frame.shape,
