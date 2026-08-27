@@ -556,6 +556,14 @@ class Underlying(abc.ABC):  # pylint: disable=too-many-instance-attributes
             data = self._get_viewer(mode).render(render_mode=mode, camera_id=camera_id)
             self.viewer._markers[:] = []  # pylint: disable=protected-access
             self.viewer._overlays.clear()  # pylint: disable=protected-access
+            # Bounded-uniform pixel-noise distraction.
+            if mode == 'rgb_array' and self.pixel_noise_alpha > 0.0:
+                noise = self.random_generator.uniform(
+                    -self.pixel_noise_alpha * 255,
+                    self.pixel_noise_alpha * 255,
+                    size=data.shape,
+                )
+                data = np.clip(data.astype(np.int32) + noise, 0, 255).astype(np.uint8)
             return data
         if mode == 'human':
             self._get_viewer(mode).render()
